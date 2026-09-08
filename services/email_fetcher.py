@@ -313,7 +313,7 @@ def fetch_email_for_account(receiver_email, category_key):
       for attempt in range(max_retries):
         imap = None
         try:
-            imap = imaplib.IMAP4_SSL(account["imap_host"])
+            imap = imaplib.IMAP4_SSL(account["imap_host"], timeout=15)
             imap.login(account["email"], password)
 
             since_date = threshold.strftime("%d-%b-%Y")

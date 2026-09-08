@@ -44,7 +44,10 @@ if(searchForm){
       if(!authorized){scanner?.classList.add('hidden'); return;}
     }
     try{
-      const res=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),35000);
+      const res=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
+      clearTimeout(timeout);
       const data=await res.json();
       if(!res.ok || !data.ok){toast(data.error || 'Search failed','error'); return;}
       if(data.denied && data.denied.length){toast(`${data.denied.length} email(s) denied/not assigned`,'error');}
@@ -66,7 +69,7 @@ if(searchForm){
         results.appendChild(card);
       }
       toast('Search completed','success');
-    }catch(err){toast('Search error: '+err.message,'error')}
+    }catch(err){toast(err.name==='AbortError'?'Search timed out. Please try again.':'Search error: '+err.message,'error')}
     finally{scanner?.classList.add('hidden'); refreshStats();}
   });
 }
