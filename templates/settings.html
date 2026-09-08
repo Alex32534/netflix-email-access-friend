@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ app_name }}{% endblock %}
+{% block content %}
+<header class="page-head"><div><p class="eyebrow">Admin control</p><h1>Settings</h1></div><a class="btn" href="{{ url_for('download_data') }}">Download Data</a></header>
+<section class="settings-grid">
+  <div class="panel settings-grid-wide"><div class="panel-head"><h2>Category Password Protection</h2><span class="muted">Each category has its own optional access code.</span></div>
+    <div class="protection-list">
+      {% for key, category in categories.items() if key in ['login_code','verification_code','verification_code_after_login','verify_email'] %}
+      <form method="post" class="protection-row"><input type="hidden" name="action" value="signin"><input type="hidden" name="category_key" value="{{ key }}"><div><strong>{{ category.label }}</strong><small>Visitors must enter this code before searching.</small></div><label class="check-row"><input type="checkbox" name="protection_enabled" value="1" {% if protections[key].enabled %}checked{% endif %}> Enabled</label><input name="private_code" type="password" autocomplete="new-password" placeholder="{% if protections[key].enabled %}Change code{% else %}Set private code{% endif %}"><button class="btn btn-small btn-primary">Save</button></form>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="panel"><div class="panel-head"><h2>Administrator Password</h2></div><form method="post" class="form-grid"><input type="hidden" name="action" value="admin_password"><label>New password<input name="new_password" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirm password<input name="confirm_password" type="password" minlength="8" autocomplete="new-password" required></label><button class="btn btn-primary">Change Admin Password</button></form></div>
+  <div class="panel"><div class="panel-head"><h2>IMAP / Email Account</h2><span class="badge {{ 'found' if account else 'not_found' }}">{{ 'Configured' if account else 'Missing' }}</span></div>
+    <form method="post" class="form-grid"><input type="hidden" name="action" value="imap"><input type="hidden" name="account_id" value="{{ account.id if account else '' }}"><label>Email Address<input name="email" type="email" required value="{{ account.email if account else '' }}"></label><label>App Password <small>Encrypted at rest and never returned.</small><input name="app_password" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved password"></label><label>IMAP Host<input name="imap_host" value="{{ account.imap_host if account else 'imap.gmail.com' }}" required></label><label>Mailbox<input name="mailbox" value="{{ account.mailbox if account else 'INBOX' }}" required></label><button class="btn btn-primary">Save Account</button></form>
+    {% if account %}<div class="button-row settings-actions"><form method="post"><input type="hidden" name="action" value="test_imap"><button class="btn" type="submit">Test Connection</button></form><form method="post" onsubmit="return confirm('Delete this IMAP account?')"><input type="hidden" name="action" value="delete_imap"><input type="hidden" name="account_id" value="{{ account.id }}"><button class="btn btn-danger" type="submit">Delete</button></form></div>{% endif %}
+  </div>
+  <div class="panel"><div class="panel-head"><h2>WhatsApp Support</h2><span class="badge {{ 'found' if whatsapp_enabled else 'not_found' }}">{{ 'Enabled' if whatsapp_enabled else 'Disabled' }}</span></div>
+    <form method="post" class="form-grid"><input type="hidden" name="action" value="whatsapp"><label class="check-row"><input type="checkbox" name="whatsapp_enabled" value="1" {% if whatsapp_enabled %}checked{% endif %}> Show support contact</label><label>WhatsApp Number <small>Use country code, digits only.</small><input name="whatsapp_number" value="{{ whatsapp_number }}" placeholder="919876543210"></label><label>Default Message<textarea name="whatsapp_message" rows="3">{{ whatsapp_message }}</textarea></label><button class="btn btn-primary">Save WhatsApp</button></form>
+  </div>
+</section>
+{% endblock %}

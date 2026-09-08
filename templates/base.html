@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  {% if current_user %}
+  <button class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+  <div class="sidebar-backdrop"></div>
+  {% endif %}
+  <div class="app-shell">
+    {% if current_user %}
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">N</div>
+        <div>
+          <strong>{{ app_name }}</strong>
+          <small>Railway Web Panel</small>
+        </div>
+      </div>
+      <nav>
+        {% if is_admin_user %}<a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">📊 Dashboard</a>{% endif %}
+        <a href="{{ url_for('search_page') }}" class="nav-link {% if request.endpoint == 'search_page' %}active{% endif %}">🔍 Public Search</a>
+        {% if is_admin_user %}<a href="{{ url_for('logs_page') }}" class="nav-link {% if request.endpoint == 'logs_page' %}active{% endif %}">🧾 Logs</a>{% endif %}
+        {% if is_admin_user %}<a href="{{ url_for('settings_page') }}" class="nav-link {% if request.endpoint == 'settings_page' %}active{% endif %}">⚙️ Settings</a>{% endif %}
+      </nav>
+      <div class="side-user">
+        <span class="status-dot"></span>
+        <div><strong>{{ current_user.username }}</strong><small>{{ current_user.role|replace('_',' ') }}</small></div>
+      </div>
+      <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+    {% endif %}
+
+    <main class="main {% if not current_user %}{% if request.endpoint == 'admin_login' %}auth-main{% else %}public-main{% endif %}{% endif %}">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-wrap">
+          {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <div id="toast-zone"></div>
+  {% if whatsapp_enabled %}<a class="whatsapp-float" href="{{ whatsapp_url }}" target="_blank" rel="noopener" aria-label="WhatsApp Support">◔<span>Help</span></a>{% endif %}
+  {% if current_user %}<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>{% endif %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

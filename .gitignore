@@ -1,0 +1,52 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Database / local data
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+data/
+instance/
+backups/
+exports/
+
+# Logs
+*.log
+logs/
+access_log.txt
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env
+venv/
+.venv/
+env/
+ENV/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build/cache
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# Uploaded/generated files
+*.zip
+*.tar
+*.gz
+
+# Railway/local runtime
+.railway/

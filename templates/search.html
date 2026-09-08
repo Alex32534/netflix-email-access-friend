@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Search · {{ app_name }}{% endblock %}
+{% block content %}
+<header class="public-nav"><a class="public-brand" href="{{ url_for('search_page') }}"><span class="brand-mark">N</span><strong>{{ app_name }}</strong></a><nav><a class="active" href="#inbox">INBOX</a>{% if whatsapp_enabled %}<a href="#contact">CONTACT</a>{% endif %}<a class="admin-link" href="{{ url_for('admin_login') }}">ADMIN</a></nav></header>
+
+<section class="public-hero" id="inbox"><p class="eyebrow">Private inbox access</p><h1>Find your Netflix email.</h1><p class="hero-copy">Enter the account email, choose the service you need, and we will search the configured inbox.</p></section>
+
+<section class="search-hero panel">
+  <form id="search-form" class="search-form">
+    <label class="full email-field">Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required><small>Change email anytime before searching.</small></label>
+    <div class="category-grid">
+      {% for key, cat in categories.items() %}
+      <label class="category-card">
+        <input type="radio" name="category" value="{{ key }}" {% if loop.first %}checked{% endif %}>
+        <span>{{ cat.icon }}</span><strong>{{ cat.label }}</strong>
+      </label>
+      {% endfor %}
+    </div>
+    <button class="btn btn-primary btn-glow" type="submit">Search Inbox</button>
+  </form>
+  <div id="scanner" class="scanner hidden"><span></span></div>
+</section>
+
+<section class="results-grid" id="results"></section>
+<section class="contact-panel panel" id="contact"><p class="eyebrow">Need help?</p><h2>Need a hand?</h2>{% if whatsapp_enabled %}<a class="btn btn-primary" href="{{ whatsapp_url }}" target="_blank" rel="noopener">◔ WhatsApp Support</a>{% else %}<p class="muted">Support contact is currently unavailable.</p>{% endif %}</section>
+<div id="private-code-modal" class="modal-backdrop" aria-hidden="true"><div class="modal-card"><button class="modal-close" type="button" data-close-private>×</button><p class="eyebrow">Private Access Required</p><h2 id="private-code-title">Private Access</h2><p class="muted">Enter your private access code to continue.</p><form id="private-code-form"><input name="private_code" type="password" autocomplete="one-time-code" placeholder="Private Access Code" required><button class="btn btn-primary" type="submit">Continue</button></form></div></div>
+{% endblock %}
+{% block scripts %}<script>window.protectedCategories={{ protected_categories|tojson }};</script>{% endblock %}

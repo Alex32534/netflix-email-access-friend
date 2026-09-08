@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div><p class="eyebrow">Live Control Room</p><h1>Admin Dashboard</h1></div>
+  <span class="live-pill"><span class="pulse"></span> Real-time</span>
+</header>
+
+<section class="stat-grid" id="stat-grid">
+  <div class="stat-card"><small>Total Searches</small><strong data-stat="total_searches">{{ stats.total_searches }}</strong></div>
+  <div class="stat-card good"><small>Successful</small><strong data-stat="successful_searches">{{ stats.successful_searches }}</strong></div>
+  <div class="stat-card danger"><small>Failed</small><strong data-stat="failed_searches">{{ stats.failed_searches }}</strong></div>
+  <div class="stat-card"><small>Searches Today</small><strong data-stat="searches_today">{{ stats.searches_today }}</strong></div>
+</section>
+
+<section class="grid-2">
+  <div class="panel">
+    <div class="panel-head"><h2>Live Activity</h2><span class="scanner-dot"></span></div>
+    <div id="live-feed" class="activity-feed">
+      {% for event in stats.recent_events %}
+      <div class="activity-item"><span>{{ event.created_at[11:19] }}</span>{{ event.message }}</div>
+      {% else %}<p class="muted">No activity yet.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>System</h2></div>
+    <div class="system-list">
+      <div><span>IMAP</span><strong class="{{ 'ok' if stats.imap_ready else 'bad' }}">{{ 'Configured' if stats.imap_ready else 'Not configured' }}</strong></div>
+      <div><span>Data Export</span><a class="btn btn-small" href="{{ url_for('download_data') }}">Download ZIP</a></div>
+      <div><span>Real-time</span><strong class="ok">Enabled</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Recent Searches</h2><a class="tiny-link" href="{{ url_for('logs_page') }}">View all</a></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Email</th><th>Category</th><th>Status</th><th>Fetch</th><th>Time</th></tr></thead>
+      <tbody>
+      {% for item in stats.recent_searches %}
+        <tr><td>{{ item.email }}</td><td>{{ item.category }}</td><td><span class="badge {{ item.status }}">{{ item.status }}</span></td><td>{{ '%.2f'|format(item.fetch_time or 0) }}s</td><td>{{ item.created_at }}</td></tr>
+      {% else %}<tr><td colspan="5" class="muted">No searches yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script>window.enableDashboardRefresh = true;</script>{% endblock %}

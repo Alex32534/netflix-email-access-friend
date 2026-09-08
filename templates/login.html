@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Login · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="auth-card glow-card">
+  <div class="auth-logo">N</div>
+  <h1>Administrator access</h1>
+  <p>This area is restricted to administrators.</p>
+  <form method="post" action="{{ url_for('admin_login') }}" class="form-grid">
+    <label>Username or Email<input name="username" required autocomplete="username" placeholder="Administrator username"></label>
+    <label>Password<input type="password" name="password" required autocomplete="current-password" placeholder="••••••••"></label>
+    <button class="btn btn-primary" type="submit">Login</button>
+  </form>
+  <p class="muted center"><a href="{{ url_for('search_page') }}">Return to public search</a></p>
+</section>
+{% endblock %}
