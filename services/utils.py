@@ -14,17 +14,17 @@ CATEGORIES = {
         "permission": "search_household",
         "window_minutes": 15,
     },
-    "reset": {
-        "label": "Reset Password",
-        "icon": "🔑",
-        "permission": "search_reset",
-        "window_hours": 24,
-    },
     "login_code": {
         "label": "Sign-in Code",
         "icon": "🔢",
         "permission": "search_login_code",
         "window_minutes": 15,
+    },
+    "reset": {
+        "label": "Reset Password",
+        "icon": "🔑",
+        "permission": "search_reset",
+        "window_hours": 24,
     },
     "verification_code": {
         "label": "Verification Code",
@@ -35,7 +35,7 @@ CATEGORIES = {
         "dangerous_for_users": True,
     },
     "verification_code_after_login": {
-        "label": "Verification Code",
+        "label": "Verification Code After Login",
         "icon": "🛡️",
         "permission": "search_verification_code_after_login",
         "window_minutes": 15,
