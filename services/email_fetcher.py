@@ -6,6 +6,7 @@ import logging
 import re
 import time
 from datetime import datetime, timedelta
+from email.header import decode_header, make_header
 
 import pytz
 
@@ -18,6 +19,30 @@ logger = logging.getLogger(__name__)
 UTC = pytz.utc
 INDIA = pytz.timezone("Asia/Kolkata")
 INDO = pytz.timezone("Asia/Jakarta")
+
+
+def _to_header_addresses(message):
+    """Return normalized addresses from the RFC To header only."""
+    raw_to = message.get("To", "")
+    if not raw_to:
+        return set()
+
+    try:
+        decoded_to = str(make_header(decode_header(raw_to)))
+    except (TypeError, ValueError):
+        decoded_to = str(raw_to)
+
+    return {
+        address.strip().lower()
+        for _display_name, address in email.utils.getaddresses([decoded_to])
+        if address and "@" in address
+    }
+
+
+def _to_header_matches(message, receiver_email):
+    """Validate the requested mailbox against only the message To header."""
+    receiver = str(receiver_email).strip().lower()
+    return bool(receiver) and receiver in _to_header_addresses(message)
 
 
 def extract_login_code(text, subject=None):
@@ -61,55 +86,26 @@ def extract_verification_code(text):
     return match.group(1) if match else None
 
 
+_POST_LOGIN_VERIFICATION_BODIES = (
+    "Someone is trying to access your account. If you recognise this request, enter this code to confirm. You'll have 15 minutes before this code expires.",
+    "Seseorang mencoba mengakses akunmu. Jika kamu mengenali permintaan ini, masukkan kode ini untuk mengonfirmasi. Kode ini akan kedaluwarsa dalam 15 menit.",
+    "มีคนพยายามเข้าใช้บัญชีของคุณ หากจำคำขอนี้ได้ ให้ป้อนรหัสนี้เพื่อยืนยัน รหัสดังกล่าวจะหมดอายุใน 15 นาที",
+    "Seseorang cuba mengakses akaun anda. Jika anda mengenali permintaan ini, masukkan kod ini untuk membuat pengesahan. Kod ini akan tamat tempoh dalam masa 15 minit.",
+)
+
+
+def is_verification_code_after_login(subject, body):
+    """Return whether an email uses the specific post-login template."""
+    text = re.sub(r"\s+", " ", f"{subject} {body}").strip().lower()
+    return any(marker.lower() in text for marker in _POST_LOGIN_VERIFICATION_BODIES)
+
+
 def extract_verification_code_after_login(subject, body):
-    """
-    Extract 6-digit verification code from the "post-login" email.
-    This email typically says "Someone is trying to access your account."
-    We search for a 6-digit number that appears AFTER the trigger phrase,
-    not anywhere else (to avoid picking forwarding confirmation codes).
-    """
-    if not body:
+    """Extract a code only after the post-login template has been identified."""
+    if not is_verification_code_after_login(subject, body):
         return None
-
-    clean_body = re.sub(r"\s+", " ", body).strip()
-    # Phrases that indicate this is the correct email type
-    valid_phrases = [
-        "someone is trying to access your account",
-        "seseorang mencoba mengakses akunmu",
-        "มีคนพยายามเข้าใช้บัญชีของคุณ",
-        "seseorang cuba mengakses akaun anda"
-    ]
-
-    # First, check if the body contains one of these phrases
-    lower_body = clean_body.lower()
-    for phrase in valid_phrases:
-        if phrase in lower_body:
-            # Find the position after the phrase
-            idx = lower_body.find(phrase)
-            if idx != -1:
-                # Look for a 6-digit number in the text after the phrase
-                rest = clean_body[idx + len(phrase):]
-                # Also look for a 6-digit number that might be preceded by "code" or "is"
-                # to be more precise
-                patterns = [
-                    r"(?i)(?:verification code|code|is)\s*(?:is|:)?\s*(\d{6})(?!\d)",
-                    r"(?<!\d)(\d{6})(?!\d)"
-                ]
-                for pattern in patterns:
-                    match = re.search(pattern, rest)
-                    if match:
-                        code = match.group(1)
-                        # ignore obvious false positives
-                        if code not in ["000000", "123456", "111111"]:
-                            return code
-                # If no code after the phrase, fall back to first 6-digit in the whole body
-                # but only if the subject indicates Netflix
-                if subject and "netflix" in subject.lower():
-                    matches = re.findall(r"(?<!\d)(\d{6})(?!\d)", clean_body)
-                    for m in matches:
-                        if m not in ["000000", "123456", "111111"]:
-                            return m
-    return None
+    matches = re.findall(r"(?<!\d)(\d{6})(?!\d)", body or "")
+    return matches[0] if matches else None
 
 
 def extract_reset_link(text):
@@ -240,6 +236,9 @@ def _build_result(receiver_email, category_key, body, time_text, subject=""):
         if code:
             return True, f"{time_text}\nEmail: {receiver_email}\nLogin Code: {code}", [code]
     elif category_key == "verification_code":
+        # Keep post-login verification mail in its own category.
+        if is_verification_code_after_login(subject, body):
+            return False, f"No {label} result found.", []
         code = extract_verification_code(body)
         if code:
             return True, f"{time_text}\nEmail: {receiver_email}\nVerification Code: {code}", [code]
@@ -349,6 +348,10 @@ def fetch_email_for_account(receiver_email, category_key):
                             if not isinstance(response_part, tuple):
                                 continue
                             msg = email.message_from_bytes(response_part[1])
+                            # IMAP TO search is only a preliminary filter. Do not
+                            # trust other recipient-like headers or metadata.
+                            if not _to_header_matches(msg, receiver_email):
+                                continue
                             email_date, time_text = _format_email_time(msg.get("Date"))
                             if email_date and email_date < threshold:
                                 continue
@@ -391,6 +394,8 @@ def fetch_email_for_account(receiver_email, category_key):
                                 if not isinstance(response_part, tuple):
                                     continue
                                 msg = email.message_from_bytes(response_part[1])
+                                if not _to_header_matches(msg, receiver_email):
+                                    continue
                                 email_date, time_text = _format_email_time(msg.get("Date"))
                                 if email_date and email_date < threshold:
                                     continue
