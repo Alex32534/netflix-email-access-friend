@@ -216,6 +216,26 @@ def _extract_body(msg):
     return clean_urls(full_body)
 
 
+def _extract_plain_text_body(msg):
+    """Match the reference fetcher: use only the first plain-text body part."""
+    if msg.is_multipart():
+        for part in msg.walk():
+            if part.get_content_type() != "text/plain" or part.get("Content-Disposition"):
+                continue
+            try:
+                payload = part.get_payload(decode=True)
+                return clean_urls((payload or b"").decode(errors="ignore"))
+            except Exception:
+                continue
+        return ""
+
+    try:
+        payload = msg.get_payload(decode=True)
+        return clean_urls((payload or b"").decode(errors="ignore"))
+    except Exception:
+        return ""
+
+
 def _format_email_time(msg_date):
     try:
         email_date = email.utils.parsedate_to_datetime(msg_date)
@@ -356,7 +376,9 @@ def fetch_email_for_account(receiver_email, category_key):
                             if email_date and email_date < threshold:
                                 continue
                             subject = msg.get("Subject") or ""
-                            body = _extract_body(msg)
+                            body = (_extract_plain_text_body(msg)
+                                    if category_key in ("verification_code", "verification_code_after_login")
+                                    else _extract_body(msg))
                             found, result, items = _build_result(receiver_email, category_key, body, time_text, subject=subject)
                             if found:
                                 found_result = {
@@ -400,7 +422,9 @@ def fetch_email_for_account(receiver_email, category_key):
                                 if email_date and email_date < threshold:
                                     continue
                                 subject = msg.get("Subject") or ""
-                                body = _extract_body(msg)
+                                body = (_extract_plain_text_body(msg)
+                                        if category_key in ("verification_code", "verification_code_after_login")
+                                        else _extract_body(msg))
                                 found, result, items = _build_result(receiver_email, category_key, body, time_text, subject=subject)
                                 if found:
                                     found_result = {
