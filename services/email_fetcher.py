@@ -88,6 +88,7 @@ def extract_verification_code(text):
 
 _POST_LOGIN_VERIFICATION_BODIES = (
     "Someone is trying to access your account. If you recognise this request, enter this code to confirm. You'll have 15 minutes before this code expires.",
+    "Someone is trying to access your account. If you recognize this request, enter this code to confirm. You'll have 15 minutes before this code expires.",
     "Seseorang mencoba mengakses akunmu. Jika kamu mengenali permintaan ini, masukkan kode ini untuk mengonfirmasi. Kode ini akan kedaluwarsa dalam 15 menit.",
     "มีคนพยายามเข้าใช้บัญชีของคุณ หากจำคำขอนี้ได้ ให้ป้อนรหัสนี้เพื่อยืนยัน รหัสดังกล่าวจะหมดอายุใน 15 นาที",
     "Seseorang cuba mengakses akaun anda. Jika anda mengenali permintaan ini, masukkan kod ini untuk membuat pengesahan. Kod ini akan tamat tempoh dalam masa 15 minit.",
