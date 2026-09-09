@@ -5,7 +5,7 @@
 <section class="settings-grid">
   <div class="panel settings-grid-wide"><div class="panel-head"><h2>Category Password Protection</h2><span class="muted">Each category has its own optional access code.</span></div>
     <div class="protection-list">
-      {% for key, category in categories.items() if key in ['login_code','verification_code','verification_code_after_login','verify_email'] %}
+      {% for key, category in categories.items() if key in ['login_code','reset','verification_code','verification_code_after_login','verify_email'] %}
       <form method="post" class="protection-row"><input type="hidden" name="action" value="signin"><input type="hidden" name="category_key" value="{{ key }}"><div><strong>{{ category.label }}</strong><small>Visitors must enter this code before searching.</small></div><label class="check-row"><input type="checkbox" name="protection_enabled" value="1" {% if protections[key].enabled %}checked{% endif %}> Enabled</label><input name="private_code" type="password" autocomplete="new-password" placeholder="{% if protections[key].enabled %}Change code{% else %}Set private code{% endif %}"><button class="btn btn-small btn-primary">Save</button></form>
       {% endfor %}
     </div>

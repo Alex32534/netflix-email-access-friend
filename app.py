@@ -27,7 +27,7 @@ socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*", trans
 
 init_db()
 failed_code_attempts = {}
-PROTECTED_CATEGORIES = ("login_code", "verification_code", "verification_code_after_login", "verify_email")
+PROTECTED_CATEGORIES = ("login_code", "reset", "verification_code", "verification_code_after_login", "verify_email")
 
 
 def row_to_dict(row):
